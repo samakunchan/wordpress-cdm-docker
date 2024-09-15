@@ -1,0 +1,45 @@
+services:
+  wordpress-db:
+    container_name: wordpress-db
+    platform: linux/x86_64
+    image: mysql:5.7
+    volumes:
+      - ./docker/wordpress/db:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: ced
+      MYSQL_PASSWORD: $PWD
+
+  wordpress:
+    platform: linux/x86_64 # Attention : platform c'est pour les Mac M1. Commenter cette ligne pour les autres environnements.
+    container_name: wordpress-site-web
+    image: wordpress:latest
+    ports:
+      - 8000:80
+    restart: always
+    volumes:
+      - ./docker/wordpress/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+      - ./docker/wordpress/html:/var/www/html
+    depends_on:
+      - wordpress-db
+    environment:
+      WORDPRESS_DB_HOST: wordpress-db:3306
+      WORDPRESS_DB_USER: ced
+      WORDPRESS_DB_PASSWORD: $PWD
+      WORDPRESS_DB_NAME: wordpress
+
+  wordpress-pma:
+    platform: linux/x86_64
+    image: phpmyadmin/phpmyadmin
+    container_name: wordpress-pma
+    restart: always
+    environment:
+      - PMA_HOST=wordpress-db
+      - PMA_PORT=3306
+      - PMA_ARBITRARY=1
+    ports:
+      - 8001:80
+    depends_on:
+      - wordpress-db
